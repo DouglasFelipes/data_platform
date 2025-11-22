@@ -28,6 +28,7 @@ from bs4 import BeautifulSoup
 from prefect import flow, get_run_logger, task
 
 from data_platform.core.config import PipelineConfig
+from data_platform.extractors.factory import get_extractor
 
 
 @task(name="fetch_html", retries=2, retry_delay_seconds=3)
@@ -170,17 +171,62 @@ def universal_download_flow(config_dict: dict) -> List[str]:
         else None
     )
 
-    html = fetch_html(base_url)
-    candidates = extract_links(html, base_url, patterns)
-
-    # Optionally limit number of files
-    if max_files and isinstance(max_files, int) and max_files > 0:
-        candidates = candidates[:max_files]
-
     downloaded: List[str] = []
-    for url in candidates:
-        path = download_file(url, dest)
-        downloaded.append(path)
+
+    if getattr(config, "source_type", "generic") != "generic":
+        # Delegate to a specific extractor when provided (e.g., 'fnde_pdf').
+        ExtractorClass = get_extractor(config.source_type)
+        extractor = ExtractorClass(url=config.source_url, params=config.source_params)
+
+        # Prefer a `find_files` method if the extractor exposes it.
+        if hasattr(extractor, "find_files"):
+            try:
+                urls = extractor.find_files()
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.error("Extractor.find_files failed: %s", exc)
+                urls = []
+        else:
+            # Fallback: call `extract()` and look for a column with origin URLs
+            try:
+                df = extractor.extract()
+                # Common column name used in our FNDE extractor: 'origem_url'
+                possible_cols = [
+                    c
+                    for c in ["origem_url", "origem", "url", "link"]
+                    if c in df.columns
+                ]
+                urls = []
+                for col in possible_cols:
+                    urls.extend([str(v) for v in df[col].dropna().unique()])
+            except Exception as exc:  # pragma: no cover - defensive
+                logger.error("Extractor.extract failed: %s", exc)
+                urls = []
+
+        # Deduplicate and optionally limit
+        seen = set()
+        candidates = []
+        for u in urls:
+            if u not in seen:
+                seen.add(u)
+                candidates.append(u)
+
+        if max_files and isinstance(max_files, int) and max_files > 0:
+            candidates = candidates[:max_files]
+
+        for url in candidates:
+            path = download_file(url, dest)
+            downloaded.append(path)
+    else:
+        html = fetch_html(base_url)
+        candidates = extract_links(html, base_url, patterns)
+
+        # Optionally limit number of files
+        if max_files and isinstance(max_files, int) and max_files > 0:
+            candidates = candidates[:max_files]
+
+        for url in candidates:
+            path = download_file(url, dest)
+            downloaded.append(path)
 
     if downloaded:
         save_metadata(downloaded, config.job_name, dest)
