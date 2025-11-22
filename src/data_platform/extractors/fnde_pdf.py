@@ -1,6 +1,7 @@
 import unicodedata
 from datetime import datetime
 from typing import Any, List, Optional
+from urllib.parse import urljoin
 
 import fitz  # PyMuPDF
 import pandas as pd
@@ -131,3 +132,36 @@ class FndePdfExtractor(BaseExtractor):
 
     def _norm_row(self, row: List[Any]) -> List[str]:
         return [self._norm_text(c) for c in row]
+
+    def find_files(self) -> List[str]:
+        """Find candidate file URLs on the FNDE page using generic heuristics.
+
+        This is a general-purpose fallback. Specific extractors can override
+        or rely on `self.params` to narrow results.
+        """
+        try:
+            resp = requests.get(self.url)
+            resp.raise_for_status()
+            soup = BeautifulSoup(resp.text, "html.parser")
+
+            candidates: List[str] = []
+            for a in soup.find_all("a", href=True):
+                raw = a["href"]
+                href = str(raw).strip()
+                href_l = href.lower()
+                # crude filter: pdf links
+                if href_l.endswith(".pdf"):
+                    full = href if href.startswith("http") else urljoin(self.url, href)
+                    candidates.append(full)
+
+            # dedupe preserving order
+            seen = set()
+            uniq: List[str] = []
+            for u in candidates:
+                if u not in seen:
+                    seen.add(u)
+                    uniq.append(u)
+
+            return uniq
+        except Exception:
+            return []

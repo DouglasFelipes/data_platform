@@ -1,5 +1,7 @@
 from data_platform.extractors.base_api import RestApiExtractor
 from data_platform.extractors.fnde_pdf import FndePdfExtractor
+from data_platform.extractors.fnde_salario import FndeSalarioExtractor
+from data_platform.extractors.fundeb_vaat import FundebVaatExtractor
 from data_platform.extractors.g1_news import G1NewsExtractor
 from data_platform.extractors.mercadolivre import MercadoLivreExtractor
 
@@ -11,6 +13,8 @@ def get_extractor(extractor_type: str):
     """
     extractors_map = {
         "fnde_pdf": FndePdfExtractor,
+        "fnde_salario": FndeSalarioExtractor,
+        "fundeb_vaat": FundebVaatExtractor,
         "rest_api": RestApiExtractor,
         "scraper_ml": MercadoLivreExtractor,
         "scraper_g1": G1NewsExtractor,
