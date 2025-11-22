@@ -26,6 +26,15 @@ jobs:
           pip install -e .
           # Instala ferramentas de desenvolvimento para rodar testes/local linters
           pip install -r requirements.txt
+          pip install --upgrade black isort flake8 mypy pandas-stubs types-requests
+      - name: Run linters
+        run: |
+          # formatting checks
+          black --check .
+          isort --check-only --profile black .
+          # static checks
+          flake8 .
+          mypy --config-file mypy.ini
       - name: Run tests
         run: |
           pytest -q
