@@ -43,11 +43,12 @@ def run_ingestion_pipeline(config_dict: dict):
         raise e
 
     # 2. Extração (Polimorfismo)
-    # execute_extraction_strategy é uma Task do Prefect; seu retorno é tratado
-    # pelo runtime do Prefect. Para satisfazer verificações estáticas (mypy)
-    # fazemos um cast explícito para `pd.DataFrame` antes de passar para a
-    # task de armazenamento.
-    df = cast(pd.DataFrame, execute_extraction_strategy(config))
+    # execute_extraction_strategy é uma Task do Prefect; em tempo de execução
+    # o Prefect gerencia a invocação. Para evitar que mypy trate a chamada
+    # como uma coroutine, usamos a função original registrada em `.fn`, que
+    # executa o corpo da task de forma síncrona — adequado para execução
+    # dentro do contexto deste flow e para checagem estática.
+    df = cast(pd.DataFrame, execute_extraction_strategy.fn(config))
 
     # 3. Carga (Reutilizável)
     save_dataframe(df=df, bucket=config.destination_bucket, path=config.raw_path)

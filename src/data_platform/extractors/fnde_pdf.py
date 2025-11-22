@@ -59,7 +59,11 @@ class FndePdfExtractor(BaseExtractor):
                     ul = bloco.find_next("ul")
                     if ul:
                         for a in ul.find_all("a", href=True):
-                            href = a["href"]
+                            href_raw = a["href"]
+                            # BeautifulSoup can return AttributeValueList for some
+                            # attributes; normalizamos para `str` para evitar erros
+                            # de tipagem e garantir que `lower()` exista.
+                            href = str(href_raw)
                             # Retorna o primeiro que encontrar (PoC)
                             href_l = href.lower()
                             distrib_kw = "distribuicao-mensal"
