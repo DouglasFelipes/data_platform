@@ -1,3 +1,6 @@
+from typing import cast
+
+import pandas as pd
 from prefect import flow, task
 
 from data_platform.core.config import PipelineConfig
@@ -40,7 +43,11 @@ def run_ingestion_pipeline(config_dict: dict):
         raise e
 
     # 2. Extração (Polimorfismo)
-    df = execute_extraction_strategy(config)
+    # execute_extraction_strategy é uma Task do Prefect; seu retorno é tratado
+    # pelo runtime do Prefect. Para satisfazer verificações estáticas (mypy)
+    # fazemos um cast explícito para `pd.DataFrame` antes de passar para a
+    # task de armazenamento.
+    df = cast(pd.DataFrame, execute_extraction_strategy(config))
 
     # 3. Carga (Reutilizável)
     save_dataframe(df=df, bucket=config.destination_bucket, path=config.raw_path)

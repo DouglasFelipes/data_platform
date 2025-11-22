@@ -1,6 +1,6 @@
 import unicodedata
 from datetime import datetime
-from typing import Optional
+from typing import Any, List, Optional
 
 import fitz  # PyMuPDF
 import pandas as pd
@@ -118,12 +118,12 @@ class FndePdfExtractor(BaseExtractor):
 
         return df
 
-    def _norm_text(self, s):
+    def _norm_text(self, s: Any) -> str:
         if not isinstance(s, str):
             return str(s) if s else ""
         s = unicodedata.normalize("NFD", s)
         s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
         return s.lower().strip()
 
-    def _norm_row(self, row):
+    def _norm_row(self, row: List[Any]) -> List[str]:
         return [self._norm_text(c) for c in row]
