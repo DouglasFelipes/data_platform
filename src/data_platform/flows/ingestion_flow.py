@@ -1,4 +1,6 @@
-from typing import cast
+import asyncio
+from inspect import iscoroutinefunction
+from typing import Any, cast
 
 import pandas as pd
 from prefect import flow, task
@@ -43,12 +45,19 @@ def run_ingestion_pipeline(config_dict: dict):
         raise e
 
     # 2. Extração (Polimorfismo)
-    # execute_extraction_strategy é uma Task do Prefect; em tempo de execução
-    # o Prefect gerencia a invocação. Para evitar que mypy trate a chamada
-    # como uma coroutine, usamos a função original registrada em `.fn`, que
-    # executa o corpo da task de forma síncrona — adequado para execução
-    # dentro do contexto deste flow e para checagem estática.
-    df = cast(pd.DataFrame, execute_extraction_strategy.fn(config))
+    # execute_extraction_strategy é uma Task do Prefect; o objeto `.fn`
+    # contém a função subjacente. Em algumas versões essa função pode ser
+    # assíncrona — então precisamos tratá-la corretamente para não gerar
+    # um coroutine não-awaitado (mypy/Runtime error).
+    func = execute_extraction_strategy.fn
+    result: Any
+    if iscoroutinefunction(func):
+        # Executa a coroutine de forma síncrona neste processo (PoC).
+        result = asyncio.run(func(config))
+    else:
+        result = func(config)
+
+    df = cast(pd.DataFrame, result)
 
     # 3. Carga (Reutilizável)
     save_dataframe(df=df, bucket=config.destination_bucket, path=config.raw_path)
