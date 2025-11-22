@@ -27,7 +27,7 @@ deployments:
       config_dict:
         job_name: "salario_educacao_repasse"
         environment: "dev"
-        source_type: "fnde_pdf"
+        source_type: "pdf"
         source_url: "https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/salario-educacao/consultas"
         source_params:
           ano: 2025

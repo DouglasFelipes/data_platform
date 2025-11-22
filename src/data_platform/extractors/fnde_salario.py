@@ -1,6 +1,6 @@
 from typing import List
 
-from data_platform.extractors.fnde_pdf import FndePdfExtractor
+from data_platform.extractors.pdf_extractor import PdfExtractor
 from data_platform.extractors.scraping_extractor import ScrapingExtractor
 
 
@@ -8,7 +8,7 @@ class FndeSalarioExtractor(ScrapingExtractor):
     """Extractor specialized for 'Salário-Educação' distribution PDFs.
 
     Uses the generic scraping base to discover candidate PDF links and
-    then delegates parsing of the selected PDF to `FndePdfExtractor`.
+    then delegates parsing of the selected PDF to `PdfExtractor`.
     """
 
     def __init__(self, url: str, params: dict | None = None):
@@ -33,5 +33,5 @@ class FndeSalarioExtractor(ScrapingExtractor):
 
             return pd.DataFrame()
         pdf_url = urls[0]
-        parser = FndePdfExtractor(url=pdf_url, params={})
+        parser = PdfExtractor(url=pdf_url, params={})
         return parser.extract()

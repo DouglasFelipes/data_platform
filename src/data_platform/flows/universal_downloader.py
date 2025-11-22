@@ -174,7 +174,7 @@ def universal_download_flow(config_dict: dict) -> List[str]:
     downloaded: List[str] = []
 
     if getattr(config, "source_type", "generic") != "generic":
-        # Delegate to a specific extractor when provided (e.g., 'fnde_pdf').
+        # Delegate to a specific extractor when provided (e.g., 'pdf').
         ExtractorClass = get_extractor(config.source_type)
         extractor = ExtractorClass(url=config.source_url, params=config.source_params)
 

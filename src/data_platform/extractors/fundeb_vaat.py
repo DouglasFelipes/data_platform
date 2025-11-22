@@ -1,13 +1,13 @@
 from typing import List
 
-from data_platform.extractors.fnde_pdf import FndePdfExtractor
+from data_platform.extractors.pdf_extractor import PdfExtractor
 from data_platform.extractors.scraping_extractor import ScrapingExtractor
 
 
 class FundebVaatExtractor(ScrapingExtractor):
     """Extractor specialized for FUNDEB VAAT lists.
 
-    Examples: Listapreliminar / Lista definitiva PDFs. Reuses the FNDE PDF
+    Examples: Listapreliminar / Lista definitiva PDFs. Reuses the generic PDF
     scraping logic but applies default filters tuned to VAAT filenames and
     link texts.
     """
@@ -44,7 +44,7 @@ class FundebVaatExtractor(ScrapingExtractor):
             import pandas as pd
 
             return pd.DataFrame()
-        # Delegate parsing to FndePdfExtractor by passing pdf_url in params
+        # Delegate parsing to the generic PDF parser by passing pdf_url in params
         pdf_url = urls[0]
-        parser = FndePdfExtractor(url=pdf_url, params={})
+        parser = PdfExtractor(url=pdf_url, params={})
         return parser.extract()

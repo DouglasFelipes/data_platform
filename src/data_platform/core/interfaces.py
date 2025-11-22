@@ -21,3 +21,13 @@ class BaseExtractor(ABC):
         Se não houver dados, retorna um DataFrame vazio.
         """
         pass
+
+    @abstractmethod
+    def find_files(self) -> list[str]:
+        """Discover candidate file URLs for this extractor.
+
+        Implementations should return a list of absolute URLs (may be empty).
+        This method is used by higher-level flows and by generic PDF parsers
+        that can be delegated to when a specific file URL is required.
+        """
+        raise NotImplementedError()

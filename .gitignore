@@ -8,3 +8,6 @@ prefect-env/
 .vscode/
 sa-prefect.json
 .env
+
+# Downloaded artifacts
+data/

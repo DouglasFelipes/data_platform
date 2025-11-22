@@ -1,6 +1,7 @@
 from data_platform.extractors.base_api import RestApiExtractor
 from data_platform.extractors.fnde_salario import FndeSalarioExtractor
 from data_platform.extractors.fundeb_vaat import FundebVaatExtractor
+from data_platform.extractors.pdf_extractor import PdfExtractor
 
 
 def get_extractor(extractor_type: str):
@@ -12,6 +13,8 @@ def get_extractor(extractor_type: str):
         "rest_api": RestApiExtractor,
         "fnde_salario": FndeSalarioExtractor,
         "fundeb_vaat": FundebVaatExtractor,
+        # modern key for generic PDF parser
+        "pdf": PdfExtractor,
     }
 
     extractor_class = extractors_map.get(extractor_type)

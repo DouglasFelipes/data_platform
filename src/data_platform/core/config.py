@@ -12,7 +12,7 @@ class PipelineConfig(BaseModel):
 
     job_name: str
     environment: str = Field(default="dev", pattern="^(dev|staging|prod)$")
-    source_type: str  # ex: "fnde_pdf", "rest_api"
+    source_type: str  # ex: "pdf", "rest_api"
 
     # Configurações de Origem
     source_url: str
