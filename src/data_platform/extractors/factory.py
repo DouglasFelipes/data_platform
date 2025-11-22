@@ -1,7 +1,8 @@
-from data_platform.extractors.fnde_pdf import FndePdfExtractor
 from data_platform.extractors.base_api import RestApiExtractor
-from data_platform.extractors.mercadolivre import MercadoLivreExtractor
+from data_platform.extractors.fnde_pdf import FndePdfExtractor
 from data_platform.extractors.g1_news import G1NewsExtractor
+from data_platform.extractors.mercadolivre import MercadoLivreExtractor
+
 
 def get_extractor(extractor_type: str):
     """
@@ -14,10 +15,10 @@ def get_extractor(extractor_type: str):
         "scraper_ml": MercadoLivreExtractor,
         "scraper_g1": G1NewsExtractor,
     }
-    
+
     extractor_class = extractors_map.get(extractor_type)
-    
+
     if not extractor_class:
         raise ValueError(f"❌ Extrator '{extractor_type}' não registrado na Factory.")
-    
+
     return extractor_class

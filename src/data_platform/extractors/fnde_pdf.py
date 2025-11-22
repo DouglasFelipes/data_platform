@@ -1,11 +1,14 @@
-import pandas as pd
-import requests
-import fitz  # PyMuPDF
 import unicodedata
-from bs4 import BeautifulSoup
 from datetime import datetime
-import io
+from typing import Optional
+
+import fitz  # PyMuPDF
+import pandas as pd
+import requests  # type: ignore
+from bs4 import BeautifulSoup
+
 from data_platform.core.interfaces import BaseExtractor
+
 
 class FndePdfExtractor(BaseExtractor):
     """
@@ -14,14 +17,14 @@ class FndePdfExtractor(BaseExtractor):
 
     def extract(self) -> pd.DataFrame:
         print(f"🔎 [FNDE] Iniciando estratégia na URL: {self.url}")
-        
+
         # 1. Recupera parâmetros
         ano = self.params.get("ano", datetime.now().year)
         meses_alvo = self.params.get("meses_alvo", [])
 
         # 2. Faz o Scraping para achar o link do PDF
         pdf_url = self._scrape_link(ano, meses_alvo)
-        
+
         if not pdf_url:
             print("⚠️ Nenhum PDF encontrado para os parâmetros informados.")
             return pd.DataFrame()
@@ -31,7 +34,7 @@ class FndePdfExtractor(BaseExtractor):
 
         # 4. Processa o PDF (Parsing)
         df = self._parse_pdf(pdf_content)
-        
+
         # Adiciona metadados úteis
         if not df.empty:
             df["ano_referencia"] = ano
@@ -41,14 +44,14 @@ class FndePdfExtractor(BaseExtractor):
 
     # --- Métodos Privados (Helpers da Classe) ---
 
-    def _scrape_link(self, ano: int, meses_alvo: list) -> str:
-        """Varre o site do Gov.br e retorna o link do PDF mais recente"""
-        print(f"   🕵️ Scraping buscando dados de {ano}...")
+    def _scrape_link(self, ano: int, meses_alvo: list) -> Optional[str]:
+        """Varre o site do Gov.br e retorna o link do PDF mais recente."""
+        print("   🕵️ Scraping buscando dados de {}...".format(ano))
         try:
             resp = requests.get(self.url)
             resp.raise_for_status()
             soup = BeautifulSoup(resp.text, "html.parser")
-            
+
             # (Sua lógica simplificada de scraping aqui)
             # Procura blocos com o ano e links de distribuição
             for bloco in soup.find_all("strong"):
@@ -57,9 +60,14 @@ class FndePdfExtractor(BaseExtractor):
                     if ul:
                         for a in ul.find_all("a", href=True):
                             href = a["href"]
-                            # Retorna o primeiro que encontrar (Lógica simplificada para a PoC)
-                            if "distribuicao-mensal" in href.lower() or "pdf" in href.lower():
-                                print(f"   🎯 PDF Encontrado: {href}")
+                            # Retorna o primeiro que encontrar (PoC)
+                            href_l = href.lower()
+                            distrib_kw = "distribuicao-mensal"
+                            pdf_kw = "pdf"
+                            has_pdf = distrib_kw in href_l
+                            has_pdf = has_pdf or pdf_kw in href_l
+                            if has_pdf:
+                                print("   🎯 PDF Encontrado: {}".format(href))
                                 return href
             return None
         except Exception as e:
@@ -67,16 +75,17 @@ class FndePdfExtractor(BaseExtractor):
             raise e
 
     def _download_pdf(self, url: str) -> bytes:
-        """Baixa o binário do PDF"""
-        print(f"   ⬇️ Baixando PDF...")
-        if url.endswith("/view"): url = url.replace("/view", "")
+        """Baixa o binário do PDF."""
+        print("   ⬇️ Baixando PDF...")
+        if url.endswith("/view"):
+            url = url.replace("/view", "")
         resp = requests.get(url)
         resp.raise_for_status()
         return resp.content
 
     def _parse_pdf(self, pdf_bytes: bytes) -> pd.DataFrame:
-        """Lógica do PyMuPDF (Fitz)"""
-        print(f"   📄 Processando PDF (OCR/Text)...")
+        """Lógica do PyMuPDF (Fitz)."""
+        print("   📄 Processando PDF (OCR/Text)...")
         doc = fitz.open(stream=pdf_bytes, filetype="pdf")
         all_data = []
         header = None
@@ -87,13 +96,15 @@ class FndePdfExtractor(BaseExtractor):
             if tables and tables.tables:
                 rows = tables.tables[0].extract()
                 if i == 0:
-                    header = self._norm_row(rows[0]) # Assume primeira linha como header
+                    header = self._norm_row(
+                        rows[0]
+                    )  # Assume primeira linha como header
                     data_rows = rows[1:]
                 else:
                     data_rows = rows
-                
+
                 all_data.extend(data_rows)
-        
+
         if not all_data:
             return pd.DataFrame()
 
@@ -104,11 +115,12 @@ class FndePdfExtractor(BaseExtractor):
             # Ajuste simples para evitar erro de tamanho
             if len(header) == df.shape[1]:
                 df.columns = header
-            
+
         return df
 
     def _norm_text(self, s):
-        if not isinstance(s, str): return str(s) if s else ""
+        if not isinstance(s, str):
+            return str(s) if s else ""
         s = unicodedata.normalize("NFD", s)
         s = "".join(ch for ch in s if unicodedata.category(ch) != "Mn")
         return s.lower().strip()

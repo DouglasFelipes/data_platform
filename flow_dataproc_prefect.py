@@ -1,8 +1,8 @@
-from prefect import flow, task
-from prefect.runtime import flow_run  # <-- 1. IMPORTADO O RUNTIME
+import google.auth
 from google.cloud import dataproc_v1
 from google.cloud.dataproc_v1.types import Batch, PySparkBatch
-import google.auth
+from prefect import flow, task
+from prefect.runtime import flow_run  # <-- 1. IMPORTADO O RUNTIME
 
 
 @task
@@ -19,7 +19,6 @@ def run_dataproc_serverless():
             "spark.driver.cores": "4",
             "spark.driver.memory": "4g",
             "spark.driver.memoryOverhead": "1g",
-
             "spark.executor.cores": "4",
             "spark.executor.memory": "4g",
             "spark.executor.memoryOverhead": "1g",
@@ -30,10 +29,7 @@ def run_dataproc_serverless():
     pyspark_file = "gs://prefect-dgzflows/jobs/job_pyspark.py"
 
     batch = Batch(
-        pyspark_batch=PySparkBatch(
-            main_python_file_uri=pyspark_file,
-            args=[]
-        ),
+        pyspark_batch=PySparkBatch(main_python_file_uri=pyspark_file, args=[]),
         runtime_config=runtime_config,
     )
 
@@ -44,19 +40,18 @@ def run_dataproc_serverless():
     # 2. Pega o ID único desta execução do flow
     # O ID será algo como 'a1b2c3d4-e5f6-...'
     flow_id = flow_run.id
-    
+
     # 3. Cria um batch_id único e rastreável
     batch_id_unico = f"prefect-dataproc-job-{flow_id}"
 
     # --- FIM DA MUDANÇA ---
-
 
     # CRIA A OPERAÇÃO
     operation = client.create_batch(
         request={
             "parent": parent,
             "batch_id": batch_id_unico,  # <-- 4. USA O ID ÚNICO AQUI
-            "batch": batch
+            "batch": batch,
         }
     )
 

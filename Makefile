@@ -5,6 +5,9 @@ PYTHON := python
 install:
 	$(PYTHON) -m pip install -r requirements.txt
 
+install-editable:
+	$(PYTHON) -m pip install -e .
+
 test:
 	pytest -q
 

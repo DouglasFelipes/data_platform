@@ -37,6 +37,31 @@ Rode os testes com:
 pytest -q
 ```
 
+## Instalação em modo editável (desenvolvimento)
+
+Recomendo instalar o pacote em modo editável para facilitar importações durante o desenvolvimento:
+
+```bash
+source prefect-env/bin/activate
+pip install -e .
+```
+
+Após isso você pode rodar o flow diretamente sem precisar exportar `PYTHONPATH`:
+
+```bash
+python -m data_platform.flows.ingestion_flow
+```
+
+## Hooks de desenvolvimento
+
+Instale `pre-commit` e ative os hooks para formatar e checar o código automaticamente:
+
+```bash
+pip install pre-commit
+pre-commit install
+pre-commit run --all-files
+```
+
 ## Contribuindo
 
 Veja `CONTRIBUTING.md` para orientações básicas.
