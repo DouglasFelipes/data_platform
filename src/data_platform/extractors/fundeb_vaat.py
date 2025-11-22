@@ -1,9 +1,10 @@
 from typing import List
 
-from .fnde_pdf import FndePdfExtractor
+from data_platform.extractors.fnde_pdf import FndePdfExtractor
+from data_platform.extractors.scraping_extractor import ScrapingExtractor
 
 
-class FundebVaatExtractor(FndePdfExtractor):
+class FundebVaatExtractor(ScrapingExtractor):
     """Extractor specialized for FUNDEB VAAT lists.
 
     Examples: Listapreliminar / Lista definitiva PDFs. Reuses the FNDE PDF
@@ -20,4 +21,30 @@ class FundebVaatExtractor(FndePdfExtractor):
 
     # Optionally expose a typed wrapper
     def find_files(self) -> List[str]:
-        return super().find_files()
+        # Use ScrapingExtractor.find_files with default PDF pattern, but also
+        # filter by defaults useful for VAAT lists.
+        html = self.fetch_html()
+        if not html:
+            return []
+
+        # patterns that capture PDFs referenced with VAAT/lista hints
+        patterns = [
+            r"vaat.*\.pdf$",
+            r"lista.*\.pdf$",
+            r"listapreliminar.*\.pdf$",
+            r"\.pdf$",
+        ]
+        candidates = self.extract_links(html, patterns=patterns)
+        return candidates
+
+    def extract(self):
+        # find the first VAAT PDF and delegate to the generic PDF parser
+        urls = self.find_files()
+        if not urls:
+            import pandas as pd
+
+            return pd.DataFrame()
+        # Delegate parsing to FndePdfExtractor by passing pdf_url in params
+        pdf_url = urls[0]
+        parser = FndePdfExtractor(url=pdf_url, params={})
+        return parser.extract()
