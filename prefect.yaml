@@ -1,0 +1,68 @@
+# Welcome to your prefect.yaml file! You can use this file for storing and managing
+# configuration for deploying your flows. We recommend committing this file to source
+# control along with your flow code.
+
+# Generic metadata about this project
+name: Ambientes
+prefect-version: 3.6.2
+
+# build section allows you to manage and build docker images
+build: null
+
+# push section allows you to manage if and how this project is uploaded to remote locations
+push: null
+
+# pull section allows you to provide instructions for cloning this project in remote locations
+pull:
+- prefect.deployments.steps.set_working_directory:
+    directory: /Users/admin/Ambientes
+
+# the deployments section allows you to provide configuration for deploying flows
+deployments:
+- name: default
+  version: null
+  tags: []
+  concurrency_limit: null
+  description: null
+  entrypoint: flow_dataproc_prefect.py:dataproc_flow
+  parameters: {}
+  work_pool:
+    name: local-dataproc-pool
+    work_queue_name: null
+    job_variables: {}
+  schedules: []
+
+deployments:
+  - name: "ingestao-fnde-salario-educacao"
+    entrypoint: "data_platform/flows/ingestion_flow.py:run_ingestion_pipeline"
+    work_pool:
+      name: "local-dataproc-pool"
+    parameters:
+      config_dict:
+        job_name: "salario_educacao_repasse"
+        environment: "dev"
+        source_type: "fnde_pdf"
+        source_url: "https://www.gov.br/fnde/pt-br/acesso-a-informacao/acoes-e-programas/financiamento/salario-educacao/consultas"
+        source_params: 
+          ano: 2025
+        destination_bucket: "br-doug-dev"
+        destination_path: "datalake"
+    schedule:
+      cron: "0 8 10 * *" # Todo dia 10 às 08:00
+
+  - name: "ingestao-feriados-nacionais"
+    entrypoint: "data_platform/flows/ingestion_flow.py:run_ingestion_pipeline"
+    work_pool:
+      name: "local-dataproc-pool"
+    parameters:
+      config_dict:
+        job_name: "feriados_nacionais_2025"
+        environment: "dev"
+        # A Mágica acontece aqui: Mudamos o tipo para 'rest_api'
+        source_type: "rest_api" 
+        source_url: "https://brasilapi.com.br/api/feriados/v1/2025"
+        source_params: {} # Essa API não precisa de filtros, mas o campo é obrigatório no contrato
+        destination_bucket: "br-doug-dev"
+        destination_path: "datalake"
+    schedule:
+      cron: "0 9 1 1 *" # Roda anualmente: Dia 01 de Janeiro às 09:00

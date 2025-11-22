@@ -1,0 +1,9 @@
+deployments:
+  - name: dataproc-serverless
+    entrypoint: flow_dataproc_prefect.py:dataproc_flow
+    storage:
+      block: gcs-code
+    work_pool:
+      name: local-dataproc-pool
+    parameters:
+      mes: "2025-10"

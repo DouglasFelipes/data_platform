@@ -1,0 +1,9 @@
+pandas==2.2.0
+pytest
+prefect
+# Dev
+black
+flake8
+isort
+mypy
+pre-commit

@@ -1,0 +1,10 @@
+__pycache__/
+.pytest_cache/
+.venv/
+prefect-env/
+*.pyc
+.DS_Store
+.idea/
+.vscode/
+sa-prefect.json
+.env
