@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         # Use strings for versions to avoid YAML parsing `3.10` as a float (becomes 3.1)
-        python-version: ['3.10']
+        python-version: ["3.10"]
 
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +35,8 @@ jobs:
           isort --check-only --profile black .
           # static checks
           flake8 .
-          mypy --config-file mypy.ini
+          # Run mypy over the source directory to provide an explicit target
+          mypy src/data_platform --config-file mypy.ini
       - name: Run tests
         run: |
           pytest -q
