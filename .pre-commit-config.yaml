@@ -21,3 +21,7 @@ repos:
     rev: v1.7.0
     hooks:
       - id: mypy
+        additional_dependencies:
+          - types-requests
+          - types-urllib3
+          - types-certifi
