@@ -18,9 +18,12 @@ def test_universal_download_delegates_to_extractor(monkeypatch):
     )
 
     # Patch download_file to avoid network calls and return a fake saved path
+    # Patch the task used by the flow to avoid network calls and return a fake
+    # saved path. The flow calls `download_and_process_task`, so patch that
+    # symbol in the module directly.
     monkeypatch.setattr(
-        "data_platform.flows.universal_downloader.download_file",
-        lambda url, dest_dir="data": "/tmp/file1.pdf",
+        "data_platform.flows.universal_downloader.download_and_process_task",
+        lambda url, bucket=None, prefix=None, dataset_name=None: ["/tmp/file1.pdf"],
     )
 
     # Patch save_metadata to be a no-op
@@ -34,7 +37,7 @@ def test_universal_download_delegates_to_extractor(monkeypatch):
         "environment": "dev",
         "source_type": "pdf",
         "source_url": "https://example.com/start",
-        "source_params": {"max_files": 1},
+        "source_params": {"max_files": 1, "dataset_name": "test_dataset"},
         "destination_path": "data_test",
         "destination_bucket": "local",
     }
